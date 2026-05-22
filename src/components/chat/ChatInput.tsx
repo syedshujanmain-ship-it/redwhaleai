@@ -1,6 +1,6 @@
 // ChatInput component - Input area for sending messages with file upload support
 import { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
-import { Send, Loader2, Paperclip, X, Square, AlertTriangle } from 'lucide-react';
+import { Send, Loader2, Paperclip, X, Square, AlertTriangle, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import type { UploadedFile, ChatMood } from '@/types/chat';
@@ -15,6 +15,7 @@ interface ChatInputProps {
   onSend: (message: string, files?: UploadedFile[]) => void;
   onStop?: () => void;
   onVoiceTranscript?: (text: string) => void;
+  onVoiceTalk?: () => void;
   disabled?: boolean;
   isLoading?: boolean;
   selectedMode: ChatMode;
@@ -30,6 +31,7 @@ export function ChatInput({
   onSend,
   onStop,
   onVoiceTranscript,
+  onVoiceTalk,
   disabled,
   isLoading,
   selectedMode,
@@ -277,6 +279,23 @@ export function ChatInput({
             }}
             disabled={disabled || isLoading}
           />
+
+          {/* Voice Talk Button */}
+          {onVoiceTalk && (
+            <button
+              type="button"
+              onClick={onVoiceTalk}
+              disabled={disabled || isLoading}
+              className={cn(
+                'flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-all duration-300',
+                'bg-gradient-to-br from-red-500 via-orange-500 to-purple-500 text-white shadow-md hover:shadow-lg hover:scale-105',
+                (disabled || isLoading) && 'opacity-50 cursor-not-allowed'
+              )}
+              title="Voice Talk"
+            >
+              <Headphones className="w-3.5 h-3.5" />
+            </button>
+          )}
 
           {/* Send/Stop button */}
           {isLoading ? (

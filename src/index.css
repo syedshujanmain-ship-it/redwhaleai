@@ -144,6 +144,41 @@ html, body, div, p, span, button, input, textarea, h1, h2, h3, h4, h5, h6, li, a
   }
 }
 
+/* Voice Talk Dialog — Colorful Sound Wave Animations */
+@keyframes voice-wave-idle {
+  0%, 100% { transform: scaleY(0.6); }
+  50% { transform: scaleY(1); }
+}
+
+@keyframes voice-wave-active {
+  0%, 100% { transform: scaleY(0.3); }
+  25% { transform: scaleY(1.2); }
+  50% { transform: scaleY(0.5); }
+  75% { transform: scaleY(1); }
+}
+
+@keyframes voice-wave-pulse {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+  50% { transform: scaleY(0.8); opacity: 1; }
+}
+
+.voice-bar-idle {
+  animation: voice-wave-idle 1.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.voice-bar-active {
+  animation: voice-wave-active 0.6s ease-in-out infinite;
+  transform-origin: center;
+  height: 80px;
+}
+
+.voice-bar-pulse {
+  animation: voice-wave-pulse 1.2s ease-in-out infinite;
+  transform-origin: center;
+  height: 40px;
+}
+
 /* Base Styles */
 @layer base {
   :root {

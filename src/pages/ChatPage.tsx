@@ -21,6 +21,7 @@ import { TypingIndicator } from '@/components/TypingIndicator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { isDangerousQuestion } from '@/utils/dangerDetector';
 import { DangerBeep } from '@/components/chat/DangerBeep';
+import { VoiceTalkDialog } from '@/components/chat/VoiceTalkDialog';
 import { useAppSettings } from '@/hooks/useAppSettings';
 
 export default function ChatPage() {
@@ -38,6 +39,7 @@ export default function ChatPage() {
   const [popupTrigger, setPopupTrigger] = useState(false);
   const [dangerousMessageIds, setDangerousMessageIds] = useState<Set<string>>(new Set());
   const [dangerBeepTrigger, setDangerBeepTrigger] = useState(false);
+  const [voiceTalkOpen, setVoiceTalkOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { theme, setTheme } = useTheme();
   const { hasAPIKeys, quotaExhausted, markQuotaExhausted } = useAPIStatus();
@@ -333,6 +335,77 @@ export default function ChatPage() {
     }
   }, [messages.length, showIntro]);
 
+  // Voice Talk — send message and return AI response text (for voice-to-voice)
+  const handleVoiceTalkMessage = async (text: string): Promise<string> => {
+    if (!hasAPIKeys) {
+      setPopupType('no-api');
+      setPopupTrigger(true);
+      throw new Error('No API keys');
+    }
+    if (quotaExhausted) {
+      setPopupType('quota-exhausted');
+      setPopupTrigger(true);
+      throw new Error('Quota exhausted');
+    }
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      parts: [{ text }],
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    const contents = [...messages, userMessage].map((msg) => ({
+      role: msg.role,
+      parts: msg.parts,
+    }));
+
+    return new Promise<string>((resolve, reject) => {
+      let finalText = '';
+      const controller = new AbortController();
+      setAbortController(controller);
+
+      ChatService.streamChatSSE(
+        contents,
+        false, false, false, false, false,
+        false, false, false, false, false, false,
+        false, false, 'android', false, false, false, false, false, false, false,
+        language,
+        selectedMood,
+        controller.signal,
+        (chunk: string) => {
+          finalText = chunk;
+        },
+        () => {
+          if (finalText) {
+            const botMessage: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'model',
+              parts: [{ text: finalText }],
+              timestamp: new Date(),
+            };
+            setMessages((prev) => [...prev, botMessage]);
+          }
+          setIsLoading(false);
+          setAbortController(null);
+          resolve(finalText);
+        },
+        (error: string) => {
+          setIsLoading(false);
+          setAbortController(null);
+          if (error !== 'ABORTED') {
+            reject(new Error(error));
+          } else {
+            resolve(finalText);
+          }
+        }
+      );
+    });
+  };
+
   const handleStop = () => {
     if (abortController) {
       abortController.abort();
@@ -556,21 +629,21 @@ export default function ChatPage() {
 
       {/* Chat Area — Full bleed, no window borders, edge-to-edge */}
       <div className="flex-1 overflow-hidden relative">
-        {/* Background Red Glow — bright at top, fades down */}
+        {/* Top Half — Red Glow fading down, meets blue in the middle */}
         <div
           className="pointer-events-none absolute top-0 left-0 right-0 z-0"
           style={{
-            height: '35vh',
-            background: 'radial-gradient(ellipse 90% 100% at 50% 0%, hsl(0 84% 60% / 0.35) 0%, hsl(0 84% 60% / 0.12) 40%, transparent 75%)',
+            height: '55vh',
+            background: 'radial-gradient(ellipse 90% 100% at 50% 0%, hsl(0 84% 60% / 0.45) 0%, hsl(0 84% 60% / 0.22) 35%, hsl(0 84% 60% / 0.06) 65%, transparent 85%)',
             animation: 'bottom-blue-glow 3s ease-in-out infinite',
           }}
         />
-        {/* Background Blue Glow — bright at bottom near input, fades up to half screen */}
+        {/* Bottom Half — Blue Glow fading up, meets red in the middle */}
         <div
           className="pointer-events-none absolute bottom-0 left-0 right-0 z-0"
           style={{
-            height: '50vh',
-            background: 'radial-gradient(ellipse 90% 100% at 50% 100%, hsl(210 100% 60% / 0.55) 0%, hsl(210 100% 65% / 0.25) 35%, hsl(210 100% 70% / 0.08) 60%, transparent 80%)',
+            height: '55vh',
+            background: 'radial-gradient(ellipse 90% 100% at 50% 100%, hsl(210 100% 60% / 0.55) 0%, hsl(210 100% 65% / 0.28) 35%, hsl(210 100% 70% / 0.08) 65%, transparent 85%)',
             animation: 'bottom-blue-glow 3s ease-in-out infinite',
           }}
         />
@@ -632,6 +705,7 @@ export default function ChatPage() {
           // Append voice text to current input or trigger send
           // The ChatInput handles appending to its internal state
         }}
+        onVoiceTalk={() => setVoiceTalkOpen(true)}
         disabled={isLoading}
         isLoading={isLoading}
         selectedMode={selectedMode}
@@ -641,6 +715,13 @@ export default function ChatPage() {
         moodEnabled={settings.moodEnabled}
         customMoods={settings.customMoods}
         customModes={settings.customModes}
+      />
+
+      {/* Voice Talk Premium Dialog */}
+      <VoiceTalkDialog
+        open={voiceTalkOpen}
+        onClose={() => setVoiceTalkOpen(false)}
+        onSendMessage={handleVoiceTalkMessage}
       />
     </div>
   );

@@ -27,7 +27,7 @@ export interface AppSettings {
 
 const DEFAULT_SETTINGS: AppSettings = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
-  dpiScale: 'medium',
+  dpiScale: 'medium-small',
   moodEnabled: true,
   customMoods: [],
   customModes: [],
