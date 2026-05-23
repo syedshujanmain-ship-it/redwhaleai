@@ -10,7 +10,7 @@ export function getAllSourceFiles(): Record<string, string> {
   "type": "module",
   "scripts": {
     "dev": "echo 'Do not use this command, only use lint to check'",
-    "build": "echo 'Do not use this command, only use lint to check'",
+    "build": "vite build",
     "lint": "tsgo -p tsconfig.check.json; biome lint --only=correctness/noUndeclaredDependencies; ast-grep scan",
     "regen": "node scripts/regenerate-sourcefiles.cjs"
   },
@@ -383,6 +383,20 @@ package-lock.json
 history/*.json
 .vite_cache
 .skills/
+.env
+.env.local
+.env.*
+`;
+  files['vercel.json'] = `{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
 `;
   files['index.html'] = `<!DOCTYPE html>
 <html lang="en">
