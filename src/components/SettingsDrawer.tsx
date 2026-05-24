@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import type { Message } from '@/types/chat';
 import { cn } from '@/lib/utils';
-import type { AppSettings, CustomMood, CustomMode, DpiScale } from '@/hooks/useAppSettings';
+import type { AppSettings, CustomMood, CustomMode, DpiScale, CursorStyle, TypingIndicatorStyle } from '@/hooks/useAppSettings';
 
 interface SettingsDrawerProps {
   onClearChat: () => void;
@@ -25,6 +25,10 @@ interface SettingsDrawerProps {
   setFontFamily: (font: string) => void;
   setDpiScale: (scale: DpiScale) => void;
   setMoodEnabled: (enabled: boolean) => void;
+  setCursorStyle: (style: CursorStyle) => void;
+  setTypingIndicatorStyle: (style: TypingIndicatorStyle) => void;
+  setThinkingMode: (enabled: boolean) => void;
+  setGlowEnabled: (enabled: boolean) => void;
   addCustomMood: (mood: Omit<CustomMood, 'id'>) => string;
   removeCustomMood: (id: string) => void;
   addCustomMode: (mode: Omit<CustomMode, 'id'>) => string;
@@ -54,6 +58,26 @@ const FONTS = [
   { label: 'Josefin Sans', value: '"Josefin Sans", system-ui, sans-serif' },
   { label: 'Cinzel', value: '"Cinzel", serif' },
   { label: 'Exo 2', value: '"Exo 2", system-ui, sans-serif' },
+  // Ultra Premium Fonts
+  { label: 'Space Grotesk', value: '"Space Grotesk", system-ui, sans-serif' },
+  { label: 'Outfit', value: '"Outfit", system-ui, sans-serif' },
+  { label: 'DM Sans', value: '"DM Sans", system-ui, sans-serif' },
+  { label: 'Manrope', value: '"Manrope", system-ui, sans-serif' },
+  { label: 'Libre Baskerville', value: '"Libre Baskerville", serif' },
+  { label: 'Spectral', value: '"Spectral", serif' },
+  { label: 'Inconsolata', value: '"Inconsolata", monospace' },
+  { label: 'Source Code Pro', value: '"Source Code Pro", monospace' },
+  { label: 'Sora', value: '"Sora", system-ui, sans-serif' },
+  { label: 'Syne', value: '"Syne", system-ui, sans-serif' },
+  { label: 'Space Mono', value: '"Space Mono", monospace' },
+  { label: 'Bodoni Moda', value: '"Bodoni Moda", serif' },
+  { label: 'Cormorant Garamond', value: '"Cormorant Garamond", serif' },
+  { label: 'Teko', value: '"Teko", system-ui, sans-serif' },
+  { label: 'Rajdhani', value: '"Rajdhani", system-ui, sans-serif' },
+  { label: 'Orbitron', value: '"Orbitron", system-ui, sans-serif' },
+  { label: 'Lexend', value: '"Lexend", system-ui, sans-serif' },
+  { label: 'Work Sans', value: '"Work Sans", system-ui, sans-serif' },
+  { label: 'Red Hat Display', value: '"Red Hat Display", system-ui, sans-serif' },
 ];
 
 const DPI_OPTIONS = [
@@ -73,6 +97,7 @@ const iconMap: Record<string, any> = {
 export function SettingsDrawer({
   onClearChat, messagesCount, messages,
   settings, setFontFamily, setDpiScale, setMoodEnabled,
+  setCursorStyle, setTypingIndicatorStyle, setThinkingMode, setGlowEnabled,
   addCustomMood, removeCustomMood, addCustomMode, removeCustomMode,
   tempChatEnabled = false, onTempChatToggle
 }: SettingsDrawerProps) {
@@ -82,7 +107,7 @@ export function SettingsDrawer({
   const [androidExportOpen, setAndroidExportOpen] = useState(false);
   const [codeGenOpen, setCodeGenOpen] = useState(false);
   const [passDialogOpen, setPassDialogOpen] = useState(false);
-  const [passTarget, setPassTarget] = useState<'download' | 'github' | 'editor' | 'android' | 'codegen'>('download');
+  const [passTarget, setPassTarget] = useState<'download' | 'github' | 'editor' | 'android' | 'codegen' | 'newrw'>('download');
   const [showCustomMoodForm, setShowCustomMoodForm] = useState(false);
   const [showCustomModeForm, setShowCustomModeForm] = useState(false);
   const [customMoodName, setCustomMoodName] = useState('');
@@ -101,7 +126,7 @@ export function SettingsDrawer({
     return () => window.removeEventListener('rw-open-github-push', handler);
   }, []);
 
-  const requirePass = (target: 'download' | 'github' | 'editor' | 'android' | 'codegen') => {
+  const requirePass = (target: 'download' | 'github' | 'editor' | 'android' | 'codegen' | 'newrw') => {
     setPassTarget(target);
     setPassDialogOpen(true);
   };
@@ -121,6 +146,10 @@ export function SettingsDrawer({
     } else if (passTarget === 'codegen') {
       setOpen(false);
       setCodeGenOpen(true);
+    } else if (passTarget === 'newrw') {
+      setOpen(false);
+      setGithubDialogOpen(true);
+      toast.success('NEW RW GitHub Source Code — Ready to push!');
     }
   };
 
@@ -174,13 +203,6 @@ export function SettingsDrawer({
       disabled: messagesCount === 0,
     },
     {
-      icon: Paintbrush,
-      label: 'UI Customization',
-      desc: 'Customize the interface to your liking',
-      onClick: () => { setOpen(false); navigate('/ui-customization'); },
-      color: 'text-purple-500',
-    },
-    {
       icon: Key,
       label: 'API Settings',
       desc: 'API keys and configuration',
@@ -203,6 +225,13 @@ export function SettingsDrawer({
       desc: 'Push code to GitHub & deploy on Vercel',
       onClick: () => requirePass('github'),
       color: 'text-slate-500',
+    },
+    {
+      icon: Plus,
+      label: 'NEW RW',
+      desc: 'Create new Red Whale from GitHub source code',
+      onClick: () => requirePass('newrw'),
+      color: 'text-primary',
     },
     {
       icon: Wand2,
@@ -415,6 +444,84 @@ export function SettingsDrawer({
                 </button>
               </div>
             )}
+
+            {/* Glow Effect Toggle */}
+            <div className="px-3 py-2">
+              <button
+                onClick={() => setGlowEnabled(!settings.glowEnabled)}
+                className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors text-left"
+              >
+                <div className={cn("p-1.5 rounded-lg bg-muted", settings.glowEnabled ? 'text-cyan-400' : 'text-muted-foreground')}>
+                  {settings.glowEnabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Red-Blue Glow</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {settings.glowEnabled ? 'Premium red-blue glow ON' : 'Glow OFF'}
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* Thinking Mode Toggle */}
+            <div className="px-3 py-2">
+              <button
+                onClick={() => setThinkingMode(!settings.thinkingMode)}
+                className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-muted/50 transition-colors text-left"
+              >
+                <div className={cn("p-1.5 rounded-lg bg-muted", settings.thinkingMode ? 'text-indigo-400' : 'text-muted-foreground')}>
+                  {settings.thinkingMode ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Thinking Process</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {settings.thinkingMode ? 'AI shows chain of thought ON' : 'Direct answers only'}
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* Cursor Style Selector — Premium 4 styles */}
+            <div className="px-3 py-2">
+              <p className="text-sm font-semibold text-foreground mb-2">Cursor Style</p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {(['beam', 'block', 'underline', 'glow'] as CursorStyle[]).map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => setCursorStyle(style)}
+                    className={cn(
+                      "py-2 px-1 rounded-lg text-[10px] font-medium border transition-all",
+                      settings.cursorStyle === style
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {style.charAt(0).toUpperCase() + style.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Typing Indicator Style — Premium 8 styles */}
+            <div className="px-3 py-2">
+              <p className="text-sm font-semibold text-foreground mb-2">Typing Indicator</p>
+              <div className="grid grid-cols-4 gap-1.5">
+                {(['dots', 'wave', 'pulse', 'orbit', 'neon', 'matrix', 'fire', 'heart'] as TypingIndicatorStyle[]).map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => setTypingIndicatorStyle(style)}
+                    className={cn(
+                      "py-2 px-1 rounded-lg text-[10px] font-medium border transition-all",
+                      settings.typingIndicatorStyle === style
+                        ? "bg-primary/10 border-primary text-primary"
+                        : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted"
+                    )}
+                  >
+                    {style.charAt(0).toUpperCase() + style.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Custom Moods */}
             <div className="flex items-center gap-2 px-3 pt-3">

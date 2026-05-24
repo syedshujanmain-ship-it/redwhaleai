@@ -1,10 +1,11 @@
 // ChatMessage component - Display individual chat messages
-import { User, Copy, Check, FileText, Pencil, RefreshCw, Send } from 'lucide-react';
+import { User, Copy, Check, FileText, Pencil, RefreshCw, Send, Brain, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 import type { Message, ChatMood } from '@/types/chat';
+import { MOOD_CONFIGS } from '@/types/chat';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Logo } from '@/components/Logo';
@@ -67,12 +68,18 @@ export function ChatMessage({ message, isStreaming = false, onEdit, onRetry, mes
   const [copied, setCopied] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
+  const [thinkingExpanded, setThinkingExpanded] = useState(false);
   const editInputRef = useRef<HTMLInputElement>(null);
   const isUser = message.role === 'user';
 
   const textParts = message.parts.filter(part => part.text);
   const imageParts = message.parts.filter(part => part.inlineData);
-  const text = textParts.map(part => part.text).join(' ');
+  const rawText = textParts.map(part => part.text).join(' ');
+
+  // Parse thinking content
+  const thinkingMatch = rawText.match(/<thinking>([\s\S]*?)<\/thinking>/i);
+  const thinkingContent = thinkingMatch ? thinkingMatch[1].trim() : null;
+  const text = rawText.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
 
   const handleCopy = async () => {
     try {
@@ -129,15 +136,42 @@ export function ChatMessage({ message, isStreaming = false, onEdit, onRetry, mes
         "flex flex-col gap-0.5 max-w-[92%] md:max-w-[85%] min-w-0",
         isUser ? "items-end" : "items-start"
       )}>
+        {/* Thinking Process Display — above message */}
+        {!isUser && thinkingContent && (
+          <div className="w-full mb-1">
+            <button
+              onClick={() => setThinkingExpanded(!thinkingExpanded)}
+              className="flex items-center gap-1.5 text-[11px] text-indigo-400 font-medium hover:text-indigo-300 transition-colors"
+            >
+              <Brain className="w-3 h-3" />
+              <span>Thinking Process</span>
+              <ChevronDown className={cn("w-3 h-3 transition-transform", thinkingExpanded && "rotate-180")} />
+            </button>
+            {thinkingExpanded && (
+              <div className="mt-1 p-2.5 rounded-xl bg-indigo-500/5 border border-indigo-500/10 text-[12px] text-indigo-300/80 leading-relaxed whitespace-pre-wrap">
+                {thinkingContent}
+              </div>
+            )}
+          </div>
+        )}
+
         <div
           className={cn(
-            'rounded-2xl px-3 py-2 break-words select-text overflow-hidden max-w-full border',
+            'rounded-2xl px-3 py-2 break-words select-text overflow-hidden max-w-full border transition-all duration-500',
             isUser
               ? 'bg-primary text-primary-foreground rounded-tr-sm'
-              : 'bg-card text-foreground rounded-tl-sm',
+              : 'bg-card text-foreground rounded-tl-sm ai-message-glow',
             isDangerous && !isUser && 'animate-[danger-glow_1.5s_ease-in-out_infinite] border-destructive/40'
           )}
-          style={{ wordWrap: 'break-word', overflowWrap: 'anywhere', wordBreak: 'break-word', fontSize: '14px' }}
+          style={{
+            wordWrap: 'break-word',
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
+            fontSize: '14px',
+            ...(mood && !isUser ? {
+              boxShadow: `0 0 12px ${MOOD_CONFIGS[mood]?.glowColor || 'transparent'}20, 0 0 24px ${MOOD_CONFIGS[mood]?.glowColor || 'transparent'}10`,
+            } : {}),
+          }}
         >
           {imageParts.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-2">

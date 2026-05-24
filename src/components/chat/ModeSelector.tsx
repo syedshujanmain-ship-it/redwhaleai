@@ -9,12 +9,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sparkles, Crown, Brain, Globe, Radio, Zap, Check, Code2, Hammer, GraduationCap, Rocket, Waves, ListOrdered, Smile, Heart, Flame, Star, Ghost, Skull } from 'lucide-react';
+import {
+  Sparkles, Crown, Brain, Globe, Radio, Zap, Check, Code2, Hammer, GraduationCap, Rocket, Waves, ListOrdered,
+  Smile, Heart, Flame, Star, Ghost, Skull, Bot, Search, BookOpen, Terminal, Footprints, Lightbulb, Compass, Gauge
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 
 const iconMap: Record<string, React.ElementType> = {
   Zap, Brain, Globe, Crown, Rocket, Hammer, GraduationCap, Radio, Sparkles, Waves, Smile, Heart, Flame, Star, Ghost, Skull,
+  Bot, Search, BookOpen, Terminal, Footprints, Lightbulb, Compass, Gauge, Code2, ListOrdered,
 };
 
 export type ChatMode = 'auto' | 'normal' | 'pro' | 'deep' | 'web' | 'think' | 'rtm' | 'code' | 'builder' | 'study' | 'fast' | 'redwhale' | 'stepbystep';
@@ -35,95 +39,95 @@ interface ModeSelectorProps {
 
 const modes = [
   {
+    id: 'redwhale' as ChatMode,
+    label: 'RW SUPER',
+    icon: Waves,
+    description: 'Unrestricted AI - No limits, no filters',
+    color: 'text-red-500',
+  },
+  {
     id: 'auto' as ChatMode,
-    label: 'Auto',
-    icon: Sparkles,
-    description: 'Medium-length answers',
-    color: 'text-purple-500',
-  },
-  {
-    id: 'stepbystep' as ChatMode,
-    label: 'Step-by-Step',
-    icon: ListOrdered,
-    description: 'Direct numbered steps',
-    color: 'text-teal-500',
-  },
-  {
-    id: 'normal' as ChatMode,
-    label: 'Normal',
-    icon: Zap,
-    description: 'Balanced & powerful',
-    color: 'text-blue-500',
+    label: 'AUTO',
+    icon: Bot,
+    description: 'Auto-detects best mode for your question',
+    color: 'text-cyan-500',
   },
   {
     id: 'pro' as ChatMode,
-    label: 'RED WHALE PRO',
+    label: 'PRO',
     icon: Crown,
-    description: 'Very long deep answers',
+    description: 'Advanced detailed answers with expertise',
     color: 'text-amber-500',
   },
   {
     id: 'deep' as ChatMode,
-    label: 'Deep Search',
-    icon: Brain,
-    description: 'Comprehensive analysis',
-    color: 'text-primary',
+    label: 'DEEP',
+    icon: Search,
+    description: 'Deep research and thorough analysis',
+    color: 'text-violet-500',
   },
   {
     id: 'web' as ChatMode,
-    label: 'Web Search',
+    label: 'WEB SECRET',
     icon: Globe,
-    description: 'Current web information',
+    description: 'Hidden websites and secret platforms',
     color: 'text-green-500',
+  },
+  {
+    id: 'code' as ChatMode,
+    label: 'CODE',
+    icon: Terminal,
+    description: 'Expert coding and programming help',
+    color: 'text-blue-500',
+  },
+  {
+    id: 'builder' as ChatMode,
+    label: 'HOW TO BUILD',
+    icon: Hammer,
+    description: 'Complete building guides step by step',
+    color: 'text-orange-500',
+  },
+  {
+    id: 'study' as ChatMode,
+    label: 'STUDY',
+    icon: BookOpen,
+    description: 'Learn anything with smart tutoring',
+    color: 'text-emerald-500',
+  },
+  {
+    id: 'think' as ChatMode,
+    label: 'PLANNING',
+    icon: Brain,
+    description: 'Strategic planning and deep thinking',
+    color: 'text-indigo-500',
+  },
+  {
+    id: 'stepbystep' as ChatMode,
+    label: 'STEP BY STEP',
+    icon: ListOrdered,
+    description: 'Numbered steps only - no extra text',
+    color: 'text-pink-500',
   },
   {
     id: 'rtm' as ChatMode,
     label: 'RTM',
     icon: Radio,
-    description: 'Real-time mode',
-    color: 'text-emerald-500',
-  },
-  {
-    id: 'think' as ChatMode,
-    label: 'Thinking',
-    icon: Brain,
-    description: 'Show thought process',
-    color: 'text-indigo-500',
-  },
-  {
-    id: 'code' as ChatMode,
-    label: 'WHALE CODE',
-    icon: Code2,
-    description: 'Advanced coding',
-    color: 'text-cyan-500',
-  },
-  {
-    id: 'builder' as ChatMode,
-    label: 'WHALE BUILDER',
-    icon: Hammer,
-    description: 'Building guides',
-    color: 'text-orange-500',
-  },
-  {
-    id: 'study' as ChatMode,
-    label: 'WHALE STUDY',
-    icon: GraduationCap,
-    description: 'Educational answers',
-    color: 'text-green-500',
+    description: 'Real-time mode for latest information',
+    color: 'text-rose-500',
   },
   {
     id: 'fast' as ChatMode,
-    label: 'WHALE FAST',
-    icon: Rocket,
-    description: 'Quick responses',
-    color: 'text-red-500',
+    label: 'FAST',
+    icon: Gauge,
+    description: 'Quick concise answers instantly',
+    color: 'text-lime-500',
   },
   {
-    id: 'redwhale' as ChatMode,
-    label: 'RED WHALE V1',
-    icon: Waves,
-    description: 'Most unrestricted mode',
-    color: 'text-primary',
+    id: 'normal' as ChatMode,
+    label: 'NORMAL',
+    icon: Sparkles,
+    description: 'Standard balanced chat mode',
+    color: 'text-slate-400',
   },
 ];
 

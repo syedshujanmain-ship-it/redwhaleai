@@ -5,6 +5,7 @@
 
 import { getAllSourceFiles } from '@/utils/sourceFiles';
 import { generateSourceFilesContent } from '@/utils/generateSourceFilesContent';
+import { getAndroidProject } from '@/utils/androidExport';
 
 const GITHUB_API = 'https://api.github.com';
 
@@ -44,7 +45,8 @@ export async function pushToGitHub(
   repoName: string,
   isPrivate: boolean,
   onProgress?: (msg: string, current: number, total: number) => void,
-  fileOverrides?: Record<string, string>
+  fileOverrides?: Record<string, string>,
+  includeAndroid = false
 ): Promise<PushResult> {
   try {
     // 1. Verify token
@@ -112,6 +114,15 @@ export async function pushToGitHub(
 
     // Generate sourceFiles.ts dynamically (avoids self-reference escaping issues)
     mergedFiles['src/utils/sourceFiles.ts'] = generateSourceFilesContent(mergedFiles);
+
+    // Include Android project files if requested
+    if (includeAndroid) {
+      onProgress?.('Adding Android project files...', 12, 100);
+      const androidFiles = getAndroidProject('Red Whale', 'com.redwhale.app');
+      for (const [path, content] of Object.entries(androidFiles)) {
+        mergedFiles[`android/${path}`] = content;
+      }
+    }
 
     const fileEntries = Object.entries(mergedFiles);
     const totalFiles = fileEntries.length;

@@ -12,9 +12,9 @@ interface PasswordDialogProps {
   description?: string;
 }
 
-// Obfuscated password check — no plaintext string in source
+// Obfuscated password check — password is "rw"
 function verifyPassword(input: string): boolean {
-  const k = [114, 119, 118, 49, 105, 110, 115, 116, 97, 108, 108];
+  const k = [114, 119];
   if (input.length !== k.length) return false;
   return k.every((c, i) => input.charCodeAt(i) === c);
 }

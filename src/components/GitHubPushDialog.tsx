@@ -23,6 +23,7 @@ export function GitHubPushDialog({ open, onOpenChange }: GitHubPushDialogProps) 
   const [token, setToken] = useState('');
   const [repoName, setRepoName] = useState('red-whale-v1');
   const [isPrivate, setIsPrivate] = useState(false);
+  const [includeAndroid, setIncludeAndroid] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState('');
   const [progressPercent, setProgressPercent] = useState(0);
@@ -62,7 +63,8 @@ export function GitHubPushDialog({ open, onOpenChange }: GitHubPushDialogProps) 
         setProgress(msg);
         setProgressPercent(Math.round((current / total) * 100));
       },
-      fileOverrides
+      fileOverrides,
+      includeAndroid
     );
 
     // Clear overrides after push attempt
@@ -97,6 +99,7 @@ export function GitHubPushDialog({ open, onOpenChange }: GitHubPushDialogProps) 
     setToken('');
     setRepoName('red-whale-v1');
     setIsPrivate(false);
+    setIncludeAndroid(false);
     setCopied(false);
     setCountdown(0);
   };
@@ -181,6 +184,18 @@ export function GitHubPushDialog({ open, onOpenChange }: GitHubPushDialogProps) 
                 </p>
               </div>
               <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Include Android Project</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {includeAndroid
+                    ? 'Android project files will be pushed in /android folder'
+                    : 'Push web source code only'}
+                </p>
+              </div>
+              <Switch checked={includeAndroid} onCheckedChange={setIncludeAndroid} />
             </div>
 
             {loading && (

@@ -29,7 +29,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState('');
   const [showIntro, setShowIntro] = useState(true);
-  const [selectedMode, setSelectedMode] = useState<ChatMode>('auto');
+  const [selectedMode, setSelectedMode] = useState<ChatMode>('redwhale');
   const [selectedMood, setSelectedMood] = useState<ChatMood>(() => {
     const saved = localStorage.getItem('redwhale_mood');
     return (saved as ChatMood) || 'normal';
@@ -49,6 +49,10 @@ export default function ChatPage() {
     setFontFamily,
     setDpiScale,
     setMoodEnabled,
+    setCursorStyle,
+    setTypingIndicatorStyle,
+    setThinkingMode,
+    setGlowEnabled,
     addCustomMood,
     removeCustomMood,
     addCustomMode,
@@ -141,9 +145,19 @@ export default function ChatPage() {
   const handleModeChange = (mode: ChatMode) => {
     setSelectedMode(mode);
     const names: Record<ChatMode, string> = {
-      auto: 'Auto', stepbystep: 'Step By Step', normal: 'Normal', pro: 'Pro',
-      deep: 'Deep Search', web: 'Web Search', rtm: 'RTM', think: 'Thinker',
-      code: 'Whale Code', builder: 'Whale Builder', study: 'Whale Study', fast: 'Whale Fast', redwhale: 'Red Whale V1',
+      redwhale: 'RW SUPER',
+      auto: 'AUTO',
+      normal: 'NORMAL',
+      pro: 'PRO',
+      deep: 'DEEP',
+      web: 'WEB SECRET',
+      think: 'PLANNING',
+      rtm: 'RTM',
+      code: 'CODE',
+      builder: 'HOW TO BUILD',
+      study: 'STUDY',
+      fast: 'FAST',
+      stepbystep: 'STEP BY STEP',
     };
     toast.success(`${names[mode]} mode active`);
   };
@@ -203,30 +217,34 @@ export default function ChatPage() {
       }));
 
       const THROTTLE_MS = 150;
-      let deepSearch = false, proMode = false, webSearch = false, showThinking = false;
-      let realTimeMode = false, codeMode = false, builderMode = false, studyMode = false;
-      let fastMode = false, redWhaleMode = false, stepByStepMode = false;
+      // All 13 modes: auto, normal, pro, deep, web, think, rtm, code, builder, study, fast, redwhale, stepbystep
+      const lowerText = text.toLowerCase();
+      let autoDetectMode = selectedMode === 'auto';
+      let deepSearch = selectedMode === 'deep';
+      let proMode = selectedMode === 'pro';
+      let webSearch = selectedMode === 'web';
+      let showThinking = settings.thinkingMode || selectedMode === 'think';
+      let realTimeMode = selectedMode === 'rtm';
+      let codeMode = selectedMode === 'code';
+      let builderMode = selectedMode === 'builder';
+      let studyMode = selectedMode === 'study';
+      let fastMode = selectedMode === 'fast';
+      let redWhaleMode = selectedMode === 'redwhale';
+      let stepByStepMode = selectedMode === 'stepbystep';
+      let howToBuildMode = selectedMode === 'builder';
+      let planningMode = selectedMode === 'think';
+      let webSecretMode = selectedMode === 'web';
 
-      if (selectedMode === 'stepbystep') stepByStepMode = true;
-      else if (selectedMode === 'redwhale') redWhaleMode = true;
-      else if (selectedMode === 'pro') proMode = true;
-      else if (selectedMode === 'deep') deepSearch = true;
-      else if (selectedMode === 'web') webSearch = true;
-      else if (selectedMode === 'think') showThinking = true;
-      else if (selectedMode === 'rtm') realTimeMode = true;
-      else if (selectedMode === 'code') codeMode = true;
-      else if (selectedMode === 'builder') builderMode = true;
-      else if (selectedMode === 'study') studyMode = true;
-      else if (selectedMode === 'fast') fastMode = true;
-      else if (selectedMode === 'auto') {
-        const lowerText = text.toLowerCase();
-        if ((lowerText.includes('how to make') || lowerText.includes('how to build') || lowerText.includes('how to create'))) builderMode = true;
-        else if (lowerText.includes('code') || lowerText.includes('program') || lowerText.includes('script') || lowerText.includes('function')) codeMode = true;
-        else if (lowerText.includes('current') || lowerText.includes('latest') || lowerText.includes('now')) realTimeMode = true;
-        else if (lowerText.includes('search') || lowerText.includes('find')) webSearch = true;
-        else if (lowerText.includes('research') || lowerText.includes('analyze')) deepSearch = true;
-        else if (lowerText.includes('why') || lowerText.includes('how does') || lowerText.includes('explain')) showThinking = true;
-        else if (lowerText.includes('complex') || lowerText.includes('advanced')) proMode = true;
+      // Auto-detect mode logic
+      if (autoDetectMode) {
+        if (lowerText.includes('code') || lowerText.includes('program') || lowerText.includes('script') || lowerText.includes('function')) codeMode = true;
+        else if (lowerText.includes('build') || lowerText.includes('make') || lowerText.includes('create') || lowerText.includes('construct')) builderMode = true;
+        else if (lowerText.includes('hack') || lowerText.includes('crack') || lowerText.includes('exploit') || lowerText.includes('bypass')) webSecretMode = true;
+        else if (lowerText.includes('study') || lowerText.includes('learn') || lowerText.includes('explain') || lowerText.includes('teach')) studyMode = true;
+        else if (lowerText.includes('steps') || lowerText.includes('how to') || lowerText.includes('guide') || lowerText.includes('tutorial')) stepByStepMode = true;
+        else if (lowerText.includes('deep') || lowerText.includes('research') || lowerText.includes('analyze') || lowerText.includes('detail')) deepSearch = true;
+        else if (lowerText.includes('fast') || lowerText.includes('quick') || lowerText.includes('short') || lowerText.includes('brief')) fastMode = true;
+        else proMode = true;
       }
 
       const controller = new AbortController();
@@ -236,7 +254,7 @@ export default function ChatPage() {
         contents,
         deepSearch, proMode, webSearch, showThinking, realTimeMode,
         codeMode, builderMode, studyMode, fastMode, redWhaleMode, stepByStepMode,
-        false, false, 'android', false, false, false, false, false, false, false,
+        false, false, 'android', howToBuildMode, planningMode, false, false, false, webSecretMode, false,
         language,
         selectedMood,
         controller.signal,
@@ -514,17 +532,8 @@ export default function ChatPage() {
       {/* Danger Zone Beep Alarm */}
       <DangerBeep trigger={dangerBeepTrigger} />
 
-      {/* Bottom Blue Glow Ambient Light — fades to white/transparent near input bar */}
-      <div
-        className="pointer-events-none fixed bottom-0 left-0 right-0 h-64 z-0"
-        style={{
-          background: 'radial-gradient(ellipse 90% 50% at 50% 100%, hsl(210 100% 60% / 0.35) 0%, hsl(210 100% 70% / 0.15) 40%, hsl(0 0% 100% / 0) 70%)',
-          animation: 'bottom-blue-glow 3s ease-in-out infinite',
-        }}
-      />
-
       {/* Top Header - Ultra Clean */}
-      <header className="shrink-0 z-50 bg-background/80 backdrop-blur-xl">
+      <header className="shrink-0 z-50 bg-transparent">
         <div className="flex items-center justify-between h-10 px-3">
           {/* Left - Chat History (hamburger) + Settings + Mode Info */}
           <div className="flex items-center gap-1">
@@ -543,6 +552,10 @@ export default function ChatPage() {
               setFontFamily={setFontFamily}
               setDpiScale={setDpiScale}
               setMoodEnabled={setMoodEnabled}
+              setCursorStyle={setCursorStyle}
+              setTypingIndicatorStyle={setTypingIndicatorStyle}
+              setThinkingMode={setThinkingMode}
+              setGlowEnabled={setGlowEnabled}
               addCustomMood={addCustomMood}
               removeCustomMood={removeCustomMood}
               addCustomMode={addCustomMode}
@@ -562,7 +575,10 @@ export default function ChatPage() {
           {/* Center - Mode name */}
           <div className="absolute left-1/2 -translate-x-1/2 pointer-events-none">
             <p className="text-[11px] font-bold tracking-widest uppercase text-foreground">
-              {selectedMode === 'auto' ? 'AUTO' : selectedMode === 'normal' ? 'NORMAL' : selectedMode === 'pro' ? 'PRO' : selectedMode === 'deep' ? 'DEEP' : selectedMode === 'web' ? 'WEB' : selectedMode === 'rtm' ? 'RTM' : selectedMode === 'think' ? 'THINK' : selectedMode === 'code' ? 'CODE' : selectedMode === 'builder' ? 'BUILDER' : selectedMode === 'study' ? 'STUDY' : selectedMode === 'fast' ? 'FAST' : selectedMode === 'redwhale' ? 'RED WHALE' : selectedMode === 'stepbystep' ? 'STEP' : 'AUTO'}
+              {selectedMode === 'redwhale' ? 'RW SUPER' :
+               selectedMode === 'builder' ? 'HOW TO BUILD' :
+               selectedMode === 'web' ? 'WEB SECRET' :
+               selectedMode === 'think' ? 'PLANNING' : 'RW SUPER'}
             </p>
           </div>
 
@@ -629,24 +645,29 @@ export default function ChatPage() {
 
       {/* Chat Area — Full bleed, no window borders, edge-to-edge */}
       <div className="flex-1 overflow-hidden relative">
-        {/* Top Half — Red Glow fading down, meets blue in the middle */}
-        <div
-          className="pointer-events-none absolute top-0 left-0 right-0 z-0"
-          style={{
-            height: '55vh',
-            background: 'radial-gradient(ellipse 90% 100% at 50% 0%, hsl(0 84% 60% / 0.45) 0%, hsl(0 84% 60% / 0.22) 35%, hsl(0 84% 60% / 0.06) 65%, transparent 85%)',
-            animation: 'bottom-blue-glow 3s ease-in-out infinite',
-          }}
-        />
-        {/* Bottom Half — Blue Glow fading up, meets red in the middle */}
-        <div
-          className="pointer-events-none absolute bottom-0 left-0 right-0 z-0"
-          style={{
-            height: '55vh',
-            background: 'radial-gradient(ellipse 90% 100% at 50% 100%, hsl(210 100% 60% / 0.55) 0%, hsl(210 100% 65% / 0.28) 35%, hsl(210 100% 70% / 0.08) 65%, transparent 85%)',
-            animation: 'bottom-blue-glow 3s ease-in-out infinite',
-          }}
-        />
+        {/* Top — Red Glow fading down */}
+        {settings.glowEnabled && (
+          <div
+            className="pointer-events-none absolute top-0 left-0 right-0 z-0"
+            style={{
+              height: '65vh',
+              background: 'radial-gradient(ellipse 90% 100% at 50% 0%, hsl(0 84% 60% / 0.5) 0%, hsl(0 84% 60% / 0.25) 30%, hsl(0 84% 60% / 0.08) 60%, transparent 85%)',
+              animation: 'red-glow-pulse 4s ease-in-out infinite alternate',
+            }}
+          />
+        )}
+        {/* Middle — Red glow transition zone */}
+        {settings.glowEnabled && (
+          <div
+            className="pointer-events-none absolute top-1/2 left-0 right-0 z-0 -translate-y-1/2"
+            style={{
+              height: '30vh',
+              background: 'linear-gradient(180deg, hsl(0 84% 60% / 0.12) 0%, hsl(280 80% 60% / 0.15) 50%, hsl(210 100% 60% / 0.12) 100%)',
+              filter: 'blur(60px)',
+              animation: 'middle-purple-pulse 5s ease-in-out infinite alternate',
+            }}
+          />
+        )}
 
         {/* Solid Intro Screen — fixed center, does NOT scroll */}
         {messages.length === 0 && !streamingMessage && showIntro && (
@@ -690,7 +711,7 @@ export default function ChatPage() {
                   />
                 )}
 
-                {isLoading && !streamingMessage && <TypingIndicator />}
+                {isLoading && !streamingMessage && <TypingIndicator style={settings.typingIndicatorStyle} />}
               </div>
             </div>
           </ScrollArea>
@@ -715,6 +736,7 @@ export default function ChatPage() {
         moodEnabled={settings.moodEnabled}
         customMoods={settings.customMoods}
         customModes={settings.customModes}
+        cursorStyle={settings.cursorStyle}
       />
 
       {/* Voice Talk Premium Dialog */}

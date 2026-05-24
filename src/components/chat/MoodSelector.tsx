@@ -7,6 +7,10 @@ import {
   Eye, Brain, Zap, Feather, Glasses, Baby,
   Moon, Hammer, Sparkles, Rocket, Shield, Terminal,
   Radio, Bot, Paintbrush, Search, Wand2, Crown,
+  // Real emotion mood icons
+  Frown, Sun, PartyPopper, Meh, AlertTriangle, Target,
+  EyeOff, Flower2, HelpCircle, Compass, AlertOctagon, Sunrise,
+  Star, ThumbsDown, HeartHandshake, HeartCrack, Cloud, Activity,
 } from 'lucide-react';
 
 const moodIcons: Record<string, React.ElementType> = {
@@ -14,6 +18,10 @@ const moodIcons: Record<string, React.ElementType> = {
   Eye, Brain, Zap, Feather, Glasses, Baby,
   Moon, Hammer, Sparkles, Rocket, Shield, Terminal,
   Radio, Bot, Paintbrush, Search, Wand2, Crown,
+  // Real emotion mood icons
+  Frown, Sun, PartyPopper, Meh, AlertTriangle, Target,
+  EyeOff, Flower2, HelpCircle, Compass, AlertOctagon, Sunrise,
+  Star, ThumbsDown, HeartHandshake, HeartCrack, Cloud, Activity,
 };
 
 interface CustomMoodItem {
@@ -52,16 +60,25 @@ export function MoodSelector({ selectedMood, onMoodChange, disabled, customMoods
               type="button"
               disabled={disabled}
               onClick={() => onMoodChange(mood)}
+              style={isSelected ? {
+                boxShadow: `0 0 8px ${config.glowColor}40, 0 0 16px ${config.glowColor}30, 0 0 24px ${config.glowColor}20`,
+              } : undefined}
               className={cn(
-                'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all duration-200 border',
+                'flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap shrink-0 transition-all duration-300 border relative overflow-hidden',
                 isSelected
-                  ? `${config.color} shadow-sm scale-105 border-current`
+                  ? `${config.color} scale-105 border-current animate-mood-glow`
                   : 'bg-card/60 text-muted-foreground border-transparent hover:bg-card hover:text-foreground',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
-              {Icon && <Icon className="w-3 h-3" />}
-              <span>{config.label}</span>
+              {isSelected && (
+                <span
+                  className="absolute inset-0 rounded-full opacity-20 animate-pulse"
+                  style={{ background: `radial-gradient(circle, ${config.glowColor} 0%, transparent 70%)` }}
+                />
+              )}
+              {Icon && <Icon className="w-3 h-3 relative z-10" />}
+              <span className="relative z-10">{config.label}</span>
             </button>
           );
         })}

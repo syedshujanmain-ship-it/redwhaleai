@@ -17,12 +17,20 @@ export interface CustomMode {
 
 export type DpiScale = 'small' | 'medium-small' | 'medium' | 'medium-big' | 'big';
 
+export type TypingIndicatorStyle = 'dots' | 'wave' | 'pulse' | 'orbit' | 'neon' | 'matrix' | 'fire' | 'heart';
+export type CursorStyle = 'beam' | 'block' | 'underline' | 'glow';
+
 export interface AppSettings {
   fontFamily: string;
   dpiScale: DpiScale;
   moodEnabled: boolean;
   customMoods: CustomMood[];
   customModes: CustomMode[];
+  cursorStyle: CursorStyle;
+  typingIndicatorStyle: TypingIndicatorStyle;
+  thinkingMode: boolean;
+  glowEnabled: boolean;
+  selectedModel: string;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -31,6 +39,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   moodEnabled: true,
   customMoods: [],
   customModes: [],
+  cursorStyle: 'beam',
+  typingIndicatorStyle: 'dots',
+  thinkingMode: false,
+  glowEnabled: true,
+  selectedModel: 'gemini-2.5-flash',
 };
 
 const STORAGE_KEY = 'redwhale_app_settings';
@@ -101,6 +114,27 @@ export function useAppSettings() {
     setSettings(prev => ({ ...prev, moodEnabled: enabled }));
   }, []);
 
+  const setCursorStyle = useCallback((style: CursorStyle) => {
+    setSettings(prev => ({ ...prev, cursorStyle: style }));
+  }, []);
+
+  const setTypingIndicatorStyle = useCallback((style: TypingIndicatorStyle) => {
+    setSettings(prev => ({ ...prev, typingIndicatorStyle: style }));
+  }, []);
+
+  const setThinkingMode = useCallback((enabled: boolean) => {
+    setSettings(prev => ({ ...prev, thinkingMode: enabled }));
+  }, []);
+
+  const setGlowEnabled = useCallback((enabled: boolean) => {
+    setSettings(prev => ({ ...prev, glowEnabled: enabled }));
+  }, []);
+
+  const setSelectedModel = useCallback((model: string) => {
+    setSettings(prev => ({ ...prev, selectedModel: model }));
+    localStorage.setItem('redwhale_custom_model', model);
+  }, []);
+
   const addCustomMood = useCallback((mood: Omit<CustomMood, 'id'>) => {
     const newMood: CustomMood = { ...mood, id: `custom_${Date.now()}` };
     setSettings(prev => ({ ...prev, customMoods: [...prev.customMoods, newMood] }));
@@ -126,6 +160,11 @@ export function useAppSettings() {
     setFontFamily,
     setDpiScale,
     setMoodEnabled,
+    setCursorStyle,
+    setTypingIndicatorStyle,
+    setThinkingMode,
+    setGlowEnabled,
+    setSelectedModel,
     addCustomMood,
     removeCustomMood,
     addCustomMode,

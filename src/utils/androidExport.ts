@@ -63,7 +63,7 @@ async function discoverDistFiles(): Promise<Record<string, string | ArrayBuffer>
   return files;
 }
 
-function getAndroidProject(appName: string, packageName: string): Record<string, string> {
+export function getAndroidProject(appName: string, packageName: string): Record<string, string> {
   const safeName = appName.replace(/\s+/g, '');
   const pkgPath = packageName.replace(/\./g, '/');
 

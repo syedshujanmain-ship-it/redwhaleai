@@ -1,5 +1,5 @@
 // ChatInput component - Input area for sending messages with file upload support
-import { useState, useRef, type FormEvent, type ChangeEvent } from 'react';
+import { useState, useRef, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import { Send, Loader2, Paperclip, X, Square, AlertTriangle, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -25,6 +25,7 @@ interface ChatInputProps {
   moodEnabled?: boolean;
   customMoods?: { id: string; name: string; icon: string; prompt: string }[];
   customModes?: { id: string; name: string; icon: string; instructions: string }[];
+  cursorStyle?: import('@/hooks/useAppSettings').CursorStyle;
 }
 
 export function ChatInput({
@@ -41,11 +42,35 @@ export function ChatInput({
   moodEnabled = true,
   customMoods = [],
   customModes = [],
+  cursorStyle = 'beam',
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [cursorPos, setCursorPos] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const [cursorLeft, setCursorLeft] = useState(0);
+
+  // Update custom cursor position
+  useEffect(() => {
+    if (measureRef.current && cursorStyle !== 'beam' && isFocused) {
+      const textBeforeCursor = message.slice(0, cursorPos);
+      measureRef.current.textContent = textBeforeCursor || ' ';
+      setCursorLeft(measureRef.current.offsetWidth);
+    }
+  }, [message, cursorPos, cursorStyle, isFocused]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessage(e.target.value);
+    setCursorPos(e.target.selectionStart || e.target.value.length);
+  };
+
+  const handleSelect = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    const target = e.target as HTMLInputElement;
+    setCursorPos(target.selectionStart || 0);
+  };
 
   const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -148,7 +173,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="z-50 w-full bg-gradient-to-t from-background via-background/95 to-transparent pt-2 pb-5 px-4 safe-bottom">
+    <div className="z-50 w-full pt-2 pb-5 px-4 safe-bottom">
       <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto space-y-2">
         {/* File previews */}
         {uploadedFiles.length > 0 && (
@@ -215,7 +240,7 @@ export function ChatInput({
           </motion.div>
         )}
 
-        {/* Slim Input Container */}
+        {/* Slim Input Container — Boundary back with shadow/glass */}
         <div className={cn(
           "rounded-full px-2 py-1.5 flex items-center gap-2 shadow-lg focus-within:ring-1 focus-within:ring-primary/30 transition-all duration-300 hover:shadow-primary/5 group bg-card/70 backdrop-blur-md",
           isDangerousQuestion(message) && "ring-1 ring-destructive/40 shadow-destructive/10"
@@ -250,23 +275,58 @@ export function ChatInput({
             className="hidden"
           />
 
-          {/* Message input */}
-          <input
-            ref={textareaRef as any}
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit(e as any);
-              }
-            }}
-            placeholder={getPlaceholder()}
-            disabled={disabled || isLoading}
-            className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm font-medium placeholder:text-muted-foreground/50 px-2 py-1"
-            style={{ fontSize: '14px' }}
-          />
+          {/* Message input with custom cursor */}
+          <div className="flex-1 min-w-0 relative">
+            {/* Hidden measurement span */}
+            <span
+              ref={measureRef}
+              className="absolute invisible whitespace-pre text-sm font-medium px-2 py-1"
+              style={{ fontSize: '14px' }}
+            />
+            <input
+              ref={textareaRef}
+              type="text"
+              value={message}
+              onChange={handleInputChange}
+              onSelect={handleSelect}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e as any);
+                }
+                // Update cursor position after key press
+                setTimeout(() => {
+                  if (textareaRef.current) {
+                    setCursorPos(textareaRef.current.selectionStart || 0);
+                  }
+                }, 0);
+              }}
+              placeholder={getPlaceholder()}
+              disabled={disabled || isLoading}
+              className={cn(
+                "w-full min-w-0 bg-transparent border-none outline-none text-sm font-medium placeholder:text-muted-foreground/50 px-2 py-1",
+                cursorStyle !== 'beam' && 'caret-transparent'
+              )}
+              style={{
+                fontSize: '14px',
+                caretColor: cursorStyle === 'beam' ? 'hsl(var(--primary))' : 'transparent',
+              }}
+            />
+            {/* Custom cursor overlay — Premium 4 styles */}
+            {cursorStyle !== 'beam' && isFocused && (
+              <span
+                className={cn(
+                  "absolute pointer-events-none",
+                  cursorStyle === 'block' && "w-[8px] h-[1.2em] top-1/2 -translate-y-1/2 bg-primary/60 rounded-sm animate-cursor-blink",
+                  cursorStyle === 'underline' && "h-[2px] w-[10px] bottom-[4px] bg-primary rounded-full animate-cursor-blink",
+                  cursorStyle === 'glow' && "w-[2px] h-[1.2em] top-1/2 -translate-y-1/2 bg-primary animate-cursor-glow shadow-[0_0_8px_2px_hsl(var(--primary))]"
+                )}
+                style={{ left: `${cursorLeft}px` }}
+              />
+            )}
+          </div>
 
           {/* Voice input */}
           <VoiceInput
